@@ -19,14 +19,20 @@
 
     <main>
       <section class="view active" id="view-home">
-        <div class="hero-card glass">
-          <div><div class="muted">Сегодня получено</div><div class="hero-money" id="todayAmount">0 ₽</div></div>
-          <div class="hero-side"><span id="todayCount">0</span><small>предоплат</small></div>
+        <div class="hero-card cashbox-hero glass">
+          <div>
+            <div class="muted">Сегодня в кассу</div>
+            <div class="hero-money" id="cashboxAmount">0 ₽</div>
+            <div class="cashbox-caption">Авансы по банкетам на сегодняшнюю дату</div>
+          </div>
+          <div class="hero-side"><span id="cashboxCount">0</span><small>не сдано</small></div>
         </div>
 
+        <div id="cashboxList" class="cashbox-list"></div>
+
         <div class="stats-grid">
-          <div class="stat-card glass"><span>Общий итог</span><strong id="totalAmount">0 ₽</strong></div>
-          <div class="stat-card glass"><span>Всего предоплат</span><strong id="totalCount">0</strong></div>
+          <div class="stat-card glass"><span>Получено сегодня</span><strong id="todayAmount">0 ₽</strong><small id="todayCountLabel">0 предоплат</small></div>
+          <div class="stat-card glass"><span>Общий итог</span><strong id="totalAmount">0 ₽</strong><small id="totalCountLabel">0 предоплат</small></div>
         </div>
 
         <div class="section-head"><div><small>БЛИЖАЙШИЕ ДАТЫ</small><h2>Банкеты</h2></div><button class="text-btn" data-go="calendar">Все</button></div>
@@ -61,11 +67,14 @@
       </section>
     </main>
 
-    <nav class="bottom-nav glass" id="bottomNav">
-      <button class="nav-btn active" data-tab="home"><span>⌂</span><small>Главная</small></button>
-      <button class="nav-btn" data-tab="calendar"><span>▦</span><small>Календарь</small></button>
-      <button class="nav-btn add-nav" data-tab="add"><span>＋</span><small>Аванс</small></button>
-      <button class="nav-btn" data-tab="history" id="historyNav"><span>↺</span><small>История</small></button>
+    <button class="quick-add glass" id="quickAdd" aria-label="Добавить аванс">
+      <span class="quick-plus">＋</span><span>Аванс</span>
+    </button>
+
+    <nav class="bottom-nav ios-glass" id="bottomNav">
+      <button class="nav-btn active" data-tab="home"><span class="nav-icon">⌂</span><small>Главная</small></button>
+      <button class="nav-btn" data-tab="calendar"><span class="nav-icon">▦</span><small>Календарь</small></button>
+      <button class="nav-btn" data-tab="history" id="historyNav"><span class="nav-icon">↺</span><small>История</small></button>
     </nav>
   </div>
 
