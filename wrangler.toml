@@ -5,3 +5,14 @@ compatibility_date = "2026-09-01"
 [assets]
 directory = "./public"
 binding = "ASSETS"
+
+[[durable_objects.bindings]]
+name = "AVANS_STORE"
+class_name = "AvansStore"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AvansStore"]
+
+[triggers]
+crons = ["55 20 * * *"]
