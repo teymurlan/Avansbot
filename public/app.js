@@ -74,7 +74,7 @@ function toast(text) {
 function haptic(type='light'){ try{ tg?.HapticFeedback?.impactOccurred(type); }catch{} }
 function switchTab(tab) {
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${tab}`));
-  $$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  $$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   if (tab==='history') loadHistory();
   if (tab==='calendar') renderCalendar();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -231,9 +231,9 @@ function loadHistory() {
   }).join(''):'<div class="empty">История пока пустая</div>';
 }
 $('#modalBackdrop').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.hidden=true});
-$('.nav-btn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+$$('.nav-btn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 $('#quickAdd').onclick=()=>switchTab('add');
-$('[data-go]').forEach(b=>b.onclick=()=>switchTab(b.dataset.go));
+$$('[data-go]').forEach(b=>b.onclick=()=>switchTab(b.dataset.go));
 $('#dateFilter').onchange=renderCalendar; $('#clearDate').onclick=()=>{$('#dateFilter').value='';renderCalendar()};
 function setMinDate(){ document.querySelectorAll('[name="banquet_date"]').forEach(i=>i.min=todayMoscow()); }
 setMinDate();
