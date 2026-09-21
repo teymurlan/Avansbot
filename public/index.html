@@ -5,76 +5,179 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#f6f1e8" />
   <title>Mangal City — Авансы</title>
-  <link rel="stylesheet" href="/styles.css?v=20260921-2" />
+  <link rel="stylesheet" href="/styles.css?v=20260921-3" />
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
         <img src="/logo.svg" alt="Mangal City" class="logo" />
-        <div><div class="eyebrow">MANGAL CITY</div><h1>Авансы банкетов</h1></div>
+        <div>
+          <div class="eyebrow">MANGAL CITY</div>
+          <h1>Авансы банкетов</h1>
+        </div>
       </div>
-      <div class="user-pill" id="userPill">…</div>
+      <button class="sync-pill" id="syncButton" type="button" aria-label="Обновить">
+        <span class="sync-dot"></span>
+        <span id="syncText">Синхронизация</span>
+      </button>
     </header>
 
     <main>
       <section class="view active" id="view-home">
-        <div class="hero-card cashbox-hero glass">
+        <div class="migration-banner glass" id="migrationBanner" hidden>
           <div>
-            <div class="muted">Сегодня в кассу</div>
-            <div class="hero-money" id="cashboxAmount">0 ₽</div>
-            <div class="cashbox-caption">Авансы по банкетам на сегодняшнюю дату</div>
+            <strong>Нашлись старые записи на этом телефоне</strong>
+            <span id="migrationText">Можно перенести их в общую базу.</span>
           </div>
-          <div class="hero-side"><span id="cashboxCount">0</span><small>не сдано</small></div>
+          <button class="mini-action" id="importLocalButton" type="button">Перенести</button>
         </div>
 
-        <div id="cashboxList" class="cashbox-list"></div>
+        <div class="hero-card cashbox-hero">
+          <div class="hero-copy">
+            <div class="hero-kicker">СЕГОДНЯ В КАССУ</div>
+            <div class="hero-money" id="cashboxAmount">0 ₽</div>
+            <div class="cashbox-caption" id="cashboxCaption">Авансы банкетов на сегодня</div>
+          </div>
+          <div class="hero-side">
+            <div class="hero-count" id="cashboxCount">0</div>
+            <small>не сдано</small>
+          </div>
+        </div>
+
+        <div class="cashbox-section">
+          <div class="section-mini-head">
+            <span>Сегодняшние банкеты</span>
+            <strong id="todayBanquetCount">0</strong>
+          </div>
+          <div id="cashboxList" class="cashbox-list"></div>
+        </div>
 
         <div class="stats-grid">
-          <div class="stat-card glass"><span>Получено сегодня</span><strong id="todayAmount">0 ₽</strong><small id="todayCountLabel">0 предоплат</small></div>
-          <div class="stat-card glass"><span>Общий итог</span><strong id="totalAmount">0 ₽</strong><small id="totalCountLabel">0 предоплат</small></div>
+          <div class="stat-card glass">
+            <span>Получено сегодня</span>
+            <strong id="todayAmount">0 ₽</strong>
+            <small id="todayCountLabel">0 предоплат</small>
+          </div>
+          <div class="stat-card glass">
+            <span>За всё время</span>
+            <strong id="totalAmount">0 ₽</strong>
+            <small id="totalCountLabel">0 предоплат</small>
+          </div>
         </div>
 
-        <div class="section-head"><div><small>БЛИЖАЙШИЕ ДАТЫ</small><h2>Банкеты</h2></div><button class="text-btn" data-go="calendar">Все</button></div>
+        <div class="section-head">
+          <div>
+            <small>БЛИЖАЙШИЕ ДАТЫ</small>
+            <h2>Банкеты</h2>
+          </div>
+          <button class="text-btn" data-go="calendar" type="button">Смотреть все</button>
+        </div>
         <div id="nearestList" class="cards-list"></div>
       </section>
 
       <section class="view" id="view-calendar">
-        <div class="section-head"><div><small>КАЛЕНДАРЬ</small><h2>Ближайшие банкеты</h2></div></div>
-        <div class="filter-row glass"><input type="date" id="dateFilter" /><button class="ghost-btn" id="clearDate">Сбросить</button></div>
+        <div class="section-head">
+          <div>
+            <small>ОБЩАЯ БАЗА</small>
+            <h2>Банкеты</h2>
+          </div>
+        </div>
+
+        <div class="search-panel glass">
+          <div class="search-box">
+            <span>⌕</span>
+            <input id="searchInput" type="search" placeholder="Имя или телефон" autocomplete="off" />
+          </div>
+          <div class="quick-filters">
+            <button class="filter-chip active" data-filter="all" type="button">Все</button>
+            <button class="filter-chip" data-filter="today" type="button">Сегодня</button>
+            <button class="filter-chip" data-filter="week" type="button">7 дней</button>
+          </div>
+          <div class="date-row">
+            <input type="date" id="dateFilter" />
+            <button class="ghost-btn" id="clearDate" type="button">Сбросить</button>
+          </div>
+        </div>
+
         <div id="calendarList" class="cards-list"></div>
       </section>
 
       <section class="view" id="view-add">
-        <div class="section-head"><div><small>НОВАЯ ЗАПИСЬ</small><h2>Внести предоплату</h2></div></div>
-        <form id="advanceForm" class="form-card glass">
-          <label>Имя клиента<input name="client_name" autocomplete="name" placeholder="Например, Александр" required /></label>
-          <label>Телефон<input name="phone" inputmode="tel" autocomplete="tel" placeholder="+7 999 123-45-67" required /></label>
-          <label>Сумма предоплаты<div class="money-input"><input name="amount" inputmode="numeric" placeholder="15000" required /><span>₽</span></div></label>
-          <div class="two-col">
-            <label>Дата банкета<input name="banquet_date" type="date" required /></label>
-            <label>Время <span class="optional">необяз.</span><input name="banquet_time" type="time" /></label>
+        <div class="section-head">
+          <div>
+            <small>БЫСТРОЕ ДОБАВЛЕНИЕ</small>
+            <h2>Новая предоплата</h2>
           </div>
-          <label>Комментарий <span class="optional">необяз.</span><textarea name="comment" rows="3" placeholder="Например: день рождения, зал у окна"></textarea></label>
-          <div class="auto-note">Дата и время получения предоплаты зафиксируются автоматически.</div>
+        </div>
+
+        <form id="advanceForm" class="form-card glass">
+          <label>Имя клиента
+            <input name="client_name" autocomplete="name" placeholder="Например, Александр" required />
+          </label>
+
+          <label>Телефон
+            <input name="phone" id="phoneInput" inputmode="tel" autocomplete="tel" placeholder="+7 999 123-45-67" required />
+          </label>
+          <div class="duplicate-hint" id="duplicateHint" hidden></div>
+
+          <label>Сумма предоплаты
+            <div class="money-input">
+              <input name="amount" inputmode="numeric" placeholder="15000" required />
+              <span>₽</span>
+            </div>
+          </label>
+
+          <div class="two-col">
+            <label>Дата банкета
+              <input name="banquet_date" type="date" required />
+            </label>
+            <label>Время <span class="optional">необяз.</span>
+              <input name="banquet_time" type="time" />
+            </label>
+          </div>
+
+          <label>Комментарий <span class="optional">необяз.</span>
+            <textarea name="comment" rows="3" placeholder="Например: день рождения, зал у окна"></textarea>
+          </label>
+
+          <div class="auto-note">
+            Получение предоплаты, сотрудник и точное время фиксируются автоматически.
+          </div>
+
           <button type="submit" class="primary-btn" id="submitAdvance">Сохранить предоплату</button>
         </form>
       </section>
 
       <section class="view" id="view-history">
-        <div class="section-head"><div><small>ТОЛЬКО АДМИН</small><h2>История изменений</h2></div></div>
+        <div class="section-head">
+          <div>
+            <small>ТОЛЬКО АДМИНИСТРАТОР</small>
+            <h2>История действий</h2>
+          </div>
+        </div>
+        <div class="history-summary glass">
+          <span>Все изменения сохраняются: кто, когда и что сделал.</span>
+        </div>
         <div id="historyList" class="timeline"></div>
       </section>
     </main>
 
-    <button class="quick-add glass" id="quickAdd" aria-label="Добавить аванс">
-      <span class="quick-plus">＋</span><span>Аванс</span>
+    <button class="quick-add" id="quickAdd" type="button" aria-label="Добавить аванс">
+      <span class="quick-plus">＋</span>
+      <span>Аванс</span>
     </button>
 
-    <nav class="bottom-nav ios-glass" id="bottomNav">
-      <button class="nav-btn active" data-tab="home"><span class="nav-icon">⌂</span><small>Главная</small></button>
-      <button class="nav-btn" data-tab="calendar"><span class="nav-icon">▦</span><small>Календарь</small></button>
-      <button class="nav-btn" data-tab="history" id="historyNav"><span class="nav-icon">↺</span><small>История</small></button>
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="nav-btn active" data-tab="home" type="button" aria-current="page">
+        <span class="nav-icon">⌂</span><small>Главная</small>
+      </button>
+      <button class="nav-btn" data-tab="calendar" type="button">
+        <span class="nav-icon">▦</span><small>Банкеты</small>
+      </button>
+      <button class="nav-btn" data-tab="history" id="historyNav" type="button">
+        <span class="nav-icon">↺</span><small>История</small>
+      </button>
     </nav>
   </div>
 
@@ -86,7 +189,8 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script type="module" src="/app.js?v=20260921-2"></script>
+  <script type="module" src="/app.js?v=20260921-3"></script>
 </body>
 </html>
