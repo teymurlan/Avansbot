@@ -1,0 +1,5 @@
+<svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="110" cy="110" r="106" fill="#fff"/>
+  <path d="M91 184c-39-8-64-38-57-78 4-22 17-38 33-50-3 15 2 25 12 31 3-22 16-49 42-69 0 23 8 34 23 49 15 15 28 34 31 58 4 34-17 53-45 59-12 3-26 3-39 0z" fill="#f41722"/>
+  <text x="110" y="132" text-anchor="middle" font-size="58" font-family="Georgia,serif" font-style="italic" font-weight="700" fill="#d5a848">MC</text>
+</svg>

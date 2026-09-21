@@ -1,0 +1,15 @@
+name = "mangal-city-avansbot"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "avansbot-db"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[triggers]
+crons = ["55 20 * * *"]

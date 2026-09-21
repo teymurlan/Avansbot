@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f1e8" />
+  <title>Mangal City — Авансы</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <img src="/logo.svg" alt="Mangal City" class="logo" />
+        <div><div class="eyebrow">MANGAL CITY</div><h1>Авансы банкетов</h1></div>
+      </div>
+      <div class="user-pill" id="userPill">…</div>
+    </header>
+
+    <main>
+      <section class="view active" id="view-home">
+        <div class="hero-card glass">
+          <div><div class="muted">Сегодня получено</div><div class="hero-money" id="todayAmount">0 ₽</div></div>
+          <div class="hero-side"><span id="todayCount">0</span><small>предоплат</small></div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card glass"><span>Общий итог</span><strong id="totalAmount">0 ₽</strong></div>
+          <div class="stat-card glass"><span>Всего предоплат</span><strong id="totalCount">0</strong></div>
+        </div>
+
+        <div class="section-head"><div><small>БЛИЖАЙШИЕ ДАТЫ</small><h2>Банкеты</h2></div><button class="text-btn" data-go="calendar">Все</button></div>
+        <div id="nearestList" class="cards-list"></div>
+      </section>
+
+      <section class="view" id="view-calendar">
+        <div class="section-head"><div><small>КАЛЕНДАРЬ</small><h2>Ближайшие банкеты</h2></div></div>
+        <div class="filter-row glass"><input type="date" id="dateFilter" /><button class="ghost-btn" id="clearDate">Сбросить</button></div>
+        <div id="calendarList" class="cards-list"></div>
+      </section>
+
+      <section class="view" id="view-add">
+        <div class="section-head"><div><small>НОВАЯ ЗАПИСЬ</small><h2>Внести предоплату</h2></div></div>
+        <form id="advanceForm" class="form-card glass">
+          <label>Имя клиента<input name="client_name" autocomplete="name" placeholder="Например, Александр" required /></label>
+          <label>Телефон<input name="phone" inputmode="tel" autocomplete="tel" placeholder="+7 999 123-45-67" required /></label>
+          <label>Сумма предоплаты<div class="money-input"><input name="amount" inputmode="numeric" placeholder="15000" required /><span>₽</span></div></label>
+          <div class="two-col">
+            <label>Дата банкета<input name="banquet_date" type="date" required /></label>
+            <label>Время <span class="optional">необяз.</span><input name="banquet_time" type="time" /></label>
+          </div>
+          <label>Комментарий <span class="optional">необяз.</span><textarea name="comment" rows="3" placeholder="Например: день рождения, зал у окна"></textarea></label>
+          <div class="auto-note">Дата и время получения предоплаты зафиксируются автоматически.</div>
+          <button type="submit" class="primary-btn" id="submitAdvance">Сохранить предоплату</button>
+        </form>
+      </section>
+
+      <section class="view" id="view-history">
+        <div class="section-head"><div><small>ТОЛЬКО АДМИН</small><h2>История изменений</h2></div></div>
+        <div id="historyList" class="timeline"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav glass" id="bottomNav">
+      <button class="nav-btn active" data-tab="home"><span>⌂</span><small>Главная</small></button>
+      <button class="nav-btn" data-tab="calendar"><span>▦</span><small>Календарь</small></button>
+      <button class="nav-btn add-nav" data-tab="add"><span>＋</span><small>Аванс</small></button>
+      <button class="nav-btn" data-tab="history" id="historyNav"><span>↺</span><small>История</small></button>
+    </nav>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal-sheet" id="detailSheet">
+      <div class="sheet-grabber"></div>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
