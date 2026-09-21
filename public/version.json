@@ -1,0 +1,6 @@
+{
+  "app": "Mangал City Avansbot",
+  "mode": "demo-no-db",
+  "build": "2026-09-21-demo-1",
+  "note": "Cloudflare Git deployment trigger"
+}
