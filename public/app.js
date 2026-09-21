@@ -37,11 +37,17 @@ function currentStats(db) {
     const t = new Date(a.received_at).getTime(); return t >= range.start && t < range.end;
   });
   const all = db.banquets.flatMap(b => b.advances || []);
+  const banquetToday = todayMoscow();
+  const cashbox = db.banquets
+    .filter(b => b.banquet_date === banquetToday)
+    .flatMap(b => (b.advances || []).filter(a => !a.cashbox_done));
   return {
     today_amount: todayAdv.reduce((s,a)=>s+Number(a.amount||0),0),
     today_count: todayAdv.length,
     total_amount: all.reduce((s,a)=>s+Number(a.amount||0),0),
-    total_count: all.length
+    total_count: all.length,
+    cashbox_amount: cashbox.reduce((s,a)=>s+Number(a.amount||0),0),
+    cashbox_count: cashbox.length
   };
 }
 function moscowDayRange(now) {
@@ -83,14 +89,68 @@ function card(b) {
 function bindCards(root=document){ root.querySelectorAll('[data-banquet]').forEach(el=>el.onclick=()=>openDetail(Number(el.dataset.banquet))); }
 function render() {
   const s = state.stats || {};
-  $('#todayAmount').textContent = fmt(s.today_amount); $('#todayCount').textContent = s.today_count || 0;
-  $('#totalAmount').textContent = fmt(s.total_amount); $('#totalCount').textContent = s.total_count || 0;
+  $('#cashboxAmount').textContent = fmt(s.cashbox_amount);
+  $('#cashboxCount').textContent = s.cashbox_count || 0;
+  $('#todayAmount').textContent = fmt(s.today_amount);
+  $('#todayCountLabel').textContent = `${s.today_count || 0} предоплат`;
+  $('#totalAmount').textContent = fmt(s.total_amount);
+  $('#totalCountLabel').textContent = `${s.total_count || 0} предоплат`;
   $('#userPill').textContent = state.actor.name;
+  renderCashbox();
   const near = state.upcoming.slice(0,5);
   $('#nearestList').innerHTML = near.length ? near.map(card).join('') : '<div class="empty">Ближайших банкетов пока нет</div>';
   bindCards($('#nearestList')); renderCalendar();
   $('#historyNav').style.display = '';
   $('#bottomNav').classList.remove('staff');
+}
+
+function renderCashbox() {
+  const db = loadDb();
+  const items = db.banquets
+    .filter(b => b.banquet_date === todayMoscow())
+    .flatMap(b => (b.advances || []).map(a => ({
+      ...a,
+      banquet_id:b.id,
+      client_name:b.client_name,
+      banquet_time:b.banquet_time
+    })))
+    .sort((a,b) => Number(a.cashbox_done) - Number(b.cashbox_done) || String(a.banquet_time||'99:99').localeCompare(String(b.banquet_time||'99:99')));
+
+  $('#cashboxList').innerHTML = items.length ? items.map(a => `
+    <div class="cashbox-row ${a.cashbox_done ? 'done' : ''}">
+      <div class="cashbox-main">
+        <div class="cashbox-name">${esc(a.client_name)}</div>
+        <div class="cashbox-meta">${esc(a.banquet_time || 'Время не указано')} · ${a.cashbox_done ? 'Сдано в кассу' : 'Нужно сдать в кассу'}</div>
+      </div>
+      <div class="cashbox-actions">
+        <div class="cashbox-sum">${fmt(a.amount)}</div>
+        <button class="cashbox-check" data-cashbox-id="${a.id}" aria-label="${a.cashbox_done ? 'Вернуть в кассу' : 'Отметить сданным'}">${a.cashbox_done ? '✓' : '○'}</button>
+      </div>
+    </div>
+  `).join('') : '<div class="empty">На сегодня авансов по банкетам нет</div>';
+
+  $('#cashboxList').querySelectorAll('[data-cashbox-id]').forEach(btn => {
+    btn.onclick = () => toggleCashbox(Number(btn.dataset.cashboxId));
+  });
+}
+
+function toggleCashbox(advanceId) {
+  const db = loadDb();
+  let found = null;
+  for (const b of db.banquets) {
+    const a = (b.advances || []).find(x => x.id === advanceId);
+    if (a) { found = a; break; }
+  }
+  if (!found) return;
+  const oldValue = found.cashbox_done ? 'Сдано в кассу' : 'Не сдано';
+  found.cashbox_done = !found.cashbox_done;
+  found.cashbox_marked_at = found.cashbox_done ? nowIso() : null;
+  found.cashbox_marked_by = found.cashbox_done ? state.actor.name : null;
+  audit(db,'updated','advance',found.id,'cashbox_status',oldValue,found.cashbox_done ? 'Сдано в кассу' : 'Не сдано');
+  saveDb(db);
+  refreshState();
+  toast(found.cashbox_done ? 'Аванс отмечен как сданный в кассу' : 'Аванс возвращён в список кассы');
+  haptic('medium');
 }
 function renderCalendar() {
   const filter = $('#dateFilter').value;
@@ -114,7 +174,7 @@ function createAdvance(form) {
     banquet_time:form.banquet_time||'', comment:(form.comment||'').trim(), created_at:received, created_by_name:state.actor.name,
     updated_at:received, advances:[]
   };
-  const adv = { id:nextId(db), amount, received_at:received, created_by_name:state.actor.name, created_by_id:state.actor.id };
+  const adv = { id:nextId(db), amount, received_at:received, created_by_name:state.actor.name, created_by_id:state.actor.id, cashbox_done:false, cashbox_marked_at:null, cashbox_marked_by:null };
   b.advances.push(adv); db.banquets.push(b);
   audit(db,'created','banquet',banquetId);
   audit(db,'created','advance',adv.id,'amount',null,String(amount));
@@ -133,7 +193,7 @@ function openDetail(id) {
   state.current=b; renderDetail(b,false); $('#modalBackdrop').hidden=false; haptic();
 }
 function renderDetail(b,editing=false) {
-  const advances=(b.advances||[]).slice().sort((a,b)=>b.received_at.localeCompare(a.received_at)).map(a=>`<div class="advance-row"><div><strong>${fmt(a.amount)}</strong><small>${esc(a.created_by_name)}</small></div><div><small>${new Date(a.received_at).toLocaleString('ru-RU',{timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small></div></div>`).join('');
+  const advances=(b.advances||[]).slice().sort((a,b)=>b.received_at.localeCompare(a.received_at)).map(a=>`<div class="advance-row ${a.cashbox_done ? 'done' : ''}"><div><strong>${fmt(a.amount)}</strong><small>${esc(a.created_by_name)}${a.cashbox_done ? ' · ✓ в кассе' : ''}</small></div><div><small>${new Date(a.received_at).toLocaleString('ru-RU',{timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</small></div></div>`).join('');
   const normal=`<div class="detail-head"><div><small class="eyebrow">БАНКЕТ #${b.id}</small><h3>${esc(b.client_name)}</h3><div class="muted">${dateRu(b.banquet_date)}${b.banquet_time?` • ${esc(b.banquet_time)}`:''}</div></div><button class="icon-btn" id="editBtn">Изменить</button></div>
     <div class="detail-meta"><div><span>Телефон</span><strong>${esc(b.phone)}</strong></div><div><span>Получено всего</span><strong>${fmt(totalAdvance(b))}</strong></div>${b.comment?`<div><span>Комментарий</span><strong>${esc(b.comment)}</strong></div>`:''}</div>
     <h4>Предоплаты</h4><div class="advance-list">${advances || '<div class="empty">Нет предоплат</div>'}</div>
@@ -159,20 +219,21 @@ function saveEdit(e) {
 function addExtra() {
   const amount=Math.round(Number($('#extraAmount').value)); if(!Number.isFinite(amount)||amount<=0)return toast('Введите сумму');
   const db=loadDb(), b=db.banquets.find(x=>x.id===state.current.id); if(!b)return;
-  const adv={id:nextId(db),amount,received_at:nowIso(),created_by_name:state.actor.name,created_by_id:state.actor.id};
+  const adv={id:nextId(db),amount,received_at:nowIso(),created_by_name:state.actor.name,created_by_id:state.actor.id,cashbox_done:false,cashbox_marked_at:null,cashbox_marked_by:null};
   b.advances.push(adv); audit(db,'created','advance',adv.id,'amount',null,String(amount)); saveDb(db); state.current=b;
   renderDetail(b,false); refreshState(); toast('Предоплата добавлена'); haptic('medium');
 }
 function loadHistory() {
-  const db=loadDb(), labels={client_name:'имя',phone:'телефон',banquet_date:'дату банкета',banquet_time:'время банкета',comment:'комментарий',amount:'аванс'};
+  const db=loadDb(), labels={client_name:'имя',phone:'телефон',banquet_date:'дату банкета',banquet_time:'время банкета',comment:'комментарий',amount:'аванс',cashbox_status:'статус кассы'};
   $('#historyList').innerHTML=db.audit.length?db.audit.map(x=>{
     let text=x.action==='created'?(x.entity_type==='advance'?`Добавил предоплату ${fmt(x.new_value)}`:'Создал банкет'):`Изменил ${labels[x.field_name]||x.field_name}: «${esc(x.old_value||'—')}» → «${esc(x.new_value||'—')}»`;
     return `<div class="timeline-item"><strong>${esc(x.actor_name)}</strong><p>${text}</p><small>${new Date(x.created_at).toLocaleString('ru-RU',{timeZone:'Europe/Moscow'})}</small></div>`;
   }).join(''):'<div class="empty">История пока пустая</div>';
 }
 $('#modalBackdrop').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.hidden=true});
-$$('.nav-btn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
-$$('[data-go]').forEach(b=>b.onclick=()=>switchTab(b.dataset.go));
+$('.nav-btn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+$('#quickAdd').onclick=()=>switchTab('add');
+$('[data-go]').forEach(b=>b.onclick=()=>switchTab(b.dataset.go));
 $('#dateFilter').onchange=renderCalendar; $('#clearDate').onclick=()=>{$('#dateFilter').value='';renderCalendar()};
 function setMinDate(){ document.querySelectorAll('[name="banquet_date"]').forEach(i=>i.min=todayMoscow()); }
 setMinDate();
