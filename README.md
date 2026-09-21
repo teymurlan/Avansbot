@@ -1,5 +1,75 @@
-# Mangал City — Avansbot
+# Mangal City — Avansbot
 
-Telegram bot + WebApp for recording restaurant banquet prepayments.
+Telegram-бот + WebApp для учёта предоплат за банкеты ресторана **Mangal City**.
 
-> Initial repository setup. Application development is performed through feature branches and pull requests.
+## Что уже реализовано
+
+- Команда `/id` показывает Telegram ID пользователя — даже до добавления в список доступа.
+- Доступ по белому списку: сотрудники + администратор.
+- WebApp с разделами **Главная / Календарь / Аванс / История**.
+- Новая предоплата: имя клиента, телефон, сумма, дата банкета, необязательное время, комментарий.
+- Дата и время получения предоплаты фиксируются **автоматически на сервере**.
+- К одному банкету можно добавлять несколько предоплат; WebApp показывает их сумму и историю.
+- Ближайшие банкеты сортируются по дате и времени.
+- По каждой новой предоплате администратор получает Telegram-уведомление.
+- По изменениям данных банкета администратор получает уведомление «было → стало».
+- Администратор видит журнал действий: кто, что и когда менял.
+- Каждый день в **23:55 по Москве** администратору приходит итог:
+  - получено сегодня;
+  - количество предоплат сегодня;
+  - общий итог полученных предоплат;
+  - общее количество предоплат.
+  Если за день операций нет, бот явно пишет, что новых предоплат не было.
+- Backend: Cloudflare Worker.
+- База: Cloudflare D1.
+- Telegram WebApp `initData` проверяется на сервере.
+
+## Переменные и секреты
+
+Секреты Cloudflare Worker:
+
+```bash
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put WEBHOOK_SECRET
+```
+
+Переменные:
+
+- `ADMIN_IDS` — Telegram ID администратора/администраторов через запятую.
+- `ALLOWED_IDS` — Telegram ID двух сотрудников через запятую.
+- `WEBAPP_URL` — production URL WebApp.
+- `INIT_DATA_MAX_AGE_SECONDS` — необязательно, по умолчанию 86400.
+
+`DEV_AUTH_ID` разрешён только для локальной разработки и не должен быть включён в production.
+
+## D1
+
+Создать базу:
+
+```bash
+npx wrangler d1 create avansbot-db
+```
+
+Полученный `database_id` заменить в `wrangler.toml`, затем применить схему:
+
+```bash
+npx wrangler d1 execute avansbot-db --remote --file=schema.sql
+```
+
+## Telegram webhook
+
+После production deploy webhook должен вести на:
+
+```text
+https://YOUR_WORKER_URL/telegram/webhook
+```
+
+При установке webhook использовать тот же `WEBHOOK_SECRET` как `secret_token`.
+
+## Проверки
+
+```bash
+npm install
+npm test
+npm run check
+```
